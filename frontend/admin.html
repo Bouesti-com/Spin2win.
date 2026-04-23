@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Spin2Win Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main>
+    <h1>Admin — Settings</h1>
+    <label>Required Shares: <input id="requiredShares" type="number" value="3" /></label><br/>
+    <label>Signal supplier (phone or handle): <input id="signalSupplier" /></label><br/>
+    <label>Redemption text: <input id="redemptionText" style="width:90%" /></label><br/>
+    <button id="save">Save Settings</button>
+    <button id="seed">Seed Admin & Example</button>
+    <div id="msg"></div>
+  </main>
+<script>
+const backendUrl = '';
+
+async function load() {
+  const resp = await fetch('/api/admin/settings');
+  const data = await resp.json();
+  document.getElementById('requiredShares').value = data.requiredShares || 3;
+  document.getElementById('signalSupplier').value = data.signalSupplier || '';
+  document.getElementById('redemptionText').value = data.redemptionText || '';
+}
+document.getElementById('save').addEventListener('click', async () => {
+  const body = {
+    requiredShares: Number(document.getElementById('requiredShares').value),
+    signalSupplier: document.getElementById('signalSupplier').value,
+    redemptionText: document.getElementById('redemptionText').value
+  };
+  await fetch('/api/admin/settings', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  document.getElementById('msg').innerText = 'Saved.';
+});
+document.getElementById('seed').addEventListener('click', async () => {
+  await fetch('/api/seed', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+    adminEmail:'omodaratanemmanuel5@gmail.com',
+    adminPassword:'Omodara12',
+    signalSupplier: document.getElementById('signalSupplier').value || undefined
+  })});
+  document.getElementById('msg').innerText = 'Seeded admin & settings.';
+});
+load();
+</script>
+</body>
+</html>
