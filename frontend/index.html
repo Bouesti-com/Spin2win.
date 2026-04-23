@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Spin2Win — Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main>
+    <h1>Spin2Win (Demo)</h1>
+    <label>User ID (any short id): <input id="userId" value="guest1" /></label>
+    <div>
+      <button id="spinBtn">Spin</button>
+    </div>
+    <div id="result"></div>
+  </main>
+<script>
+const API_BASE = ''; // When hosted, frontend will be served from Vercel and backend from Render; set full backend URL in Vercel env if needed.
+
+async function checkEligible(userId) {
+  const backendUrl = (typeof BACKEND_URL !== 'undefined' && BACKEND_URL) ? BACKEND_URL : '';
+  const resp = await fetch((backendUrl || '') + '/api/check-eligible/' + encodeURIComponent(userId));
+  return resp.json();
+}
+
+async function shareToSignal(text) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Claim prize', text });
+      alert('Share sheet opened. Choose Signal.');
+      return;
+    } catch (e) {
+      // user closed share
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    alert('Message copied to clipboard. Open Signal and paste/send to supplier.');
+  } catch (e) {
+    alert('Could not copy automatically. Please copy the message manually:\n\n' + text);
+  }
+}
+
+document.getElementById('spinBtn').addEventListener('click', async () => {
+  const userId = document.getElementById('userId').value.trim();
+  if (!userId) return alert('Enter a user id');
+  const res = await checkEligible(userId);
+  const out = document.getElementById('result');
+  out.innerHTML = '';
+  if (!res.eligible) {
+    out.innerHTML = '<p>Not eligible yet. Confirmations: ' + res.confirmedCount + ' / ' + res.required + '</p>' +
+                    '<p>Share with friends to reach required confirmations.</p>';
+    return;
+  }
+  // eligible
+  out.innerHTML = '<p><strong>Eligible!</strong></p>' +
+                  '<pre id="shareText" style="white-space:pre-wrap"></pre>' +
+                  '<div><button id="shareBtn">Share via Signal</button></div>';
+  document.getElementById('shareText').innerText = res.shareMessage;
+  document.getElementById('shareBtn').addEventListener('click', () => shareToSignal(res.shareMessage));
+});
+</script>
+</body>
+</html>
